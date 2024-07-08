@@ -10,6 +10,20 @@ const selectedStates = {};
 
 // Load GeoJSON from an external file
 $.getJSON("us-states.json", function(geoJsonData) {
+    $("#selected-account").val("account1");
+    $.ajax({
+        type: 'GET',
+        url: 'https://mocki.io/v1/58d26a31-df69-4909-9d23-b5a29bdd9e3c',
+        success: function (data) {
+            console.log(data);
+            // Populate account dropdown
+            const accountList = data.map(account => `<option value="${account.accountId}">${account.accountName}</option>`);
+            $('#selected-account').append(accountList);
+        }
+    });
+    if ($.isEmptyObject(selectedStates)) {
+        $('#submit').prop('disabled', true);
+    }
     L.geoJson(geoJsonData, {
         style: function (feature) {
             return {color: 'blue', weight: 2};
@@ -39,15 +53,38 @@ $.getJSON("us-states.json", function(geoJsonData) {
                 }
                 console.log(feature);
                 updateSidebar();
+                if ($.isEmptyObject(selectedStates)) {
+                    $('#submit').prop('disabled', true);
+                } else {
+                    $('#submit').prop('disabled', false);
+                }
             });
         }
     }).addTo(map);
 });
 
 function updateSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    sidebar.innerHTML = 'Selected States:<br>';
+    const sidebar = document.getElementById('selected-states');
+    sidebar.innerHTML = '';
     for (const state in selectedStates) {
         sidebar.innerHTML += `<div class="state-name">${state}</div>`;
     }
 }
+function submit () {
+    const account = $('#selected-account').val();
+    $.ajax({
+        type: 'POST',
+        url: 'https://api.example.com/submit',
+        data: {
+            data: JSON.stringify({account, selectedStates})
+        },
+        success: function (data) {
+            console.log(data);
+        }
+    })
+};
+
+$('#selected-account').on('change', function () {
+    const account = $(this).val();
+    console.log(account);
+});
